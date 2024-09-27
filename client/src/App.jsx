@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+import MonacoEditor from '@monaco-editor/react';  // Correct import
 
-function App() {
-  const [count, setCount] = useState(0)
+const socket = io('http://localhost:5000');
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+const App = () => {
+    const [code, setCode] = useState('// Write your code here');
+    const roomId = 'room1';
 
-export default App
+    useEffect(() => {
+        socket.emit('joinRoom', roomId);
+
+        socket.on('codeUpdate', (data) => {
+            setCode(data.code);
+        });
+
+        return () => {
+            socket.off('codeUpdate');
+        };
+    }, []);
+
+    const handleCodeChange = (value) => {
+        setCode(value);
+        socket.emit('codeChange', { roomId, code: value });
+    };
+
+    return (
+        <div>
+            <h1>Collaborative Code Editor</h1>
+            <MonacoEditor
+                height="90vh"
+                language="javascript"
+                value={code}
+                onChange={handleCodeChange}
+            />
+        </div>
+    );
+};
+
+export default App;
