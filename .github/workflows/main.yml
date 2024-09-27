@@ -1,0 +1,44 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+      working-directory: ./client # or ./server if you are setting up for the backend
+
+    - name: Run tests
+      run: npm test
+      working-directory: ./client # or ./server if you are setting up for the backend
+
+    - name: Build the application
+      run: npm run build
+      working-directory: ./client # Only needed for the frontend
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to GitHub Pages or Netlify
+      run: |
+        # Add your deployment script here, depending on your hosting service
+        npm run deploy
+      working-directory: ./client
